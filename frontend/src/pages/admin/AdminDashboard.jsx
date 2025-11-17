@@ -19,6 +19,7 @@ import {
   TextField,
   MenuItem,
   Button,
+  Divider,
 } from '@mui/material';
 import {
   ShoppingCart,
@@ -26,6 +27,9 @@ import {
   Inventory,
   AttachMoney,
   Visibility,
+  TrendingUp,
+  AutoGraph,
+  Shield,
 } from '@mui/icons-material';
 import {
   LineChart,
@@ -38,13 +42,17 @@ import {
   ResponsiveContainer,
   XAxis,
   YAxis,
+  AreaChart,
+  Area,
 } from 'recharts';
 import api from '../../services/api';
+import { useAuth } from '../../context/AuthContext';
 
 const monthLabels = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
 const formatDateInput = (date) => date.toISOString().split('T')[0];
 
 const AdminDashboard = () => {
+  const { user } = useAuth();
   const [dashboardData, setDashboardData] = useState(null);
   const [statsLoading, setStatsLoading] = useState(true);
   const [monthlySales, setMonthlySales] = useState([]);
@@ -109,6 +117,7 @@ const AdminDashboard = () => {
   const summary = dashboardData?.stats || {};
   const recentOrders = dashboardData?.recentOrders || [];
   const lowStockProducts = dashboardData?.lowStockProducts || [];
+  const statusSummary = dashboardData?.ordersByStatus || [];
 
   const statCards = [
     {
@@ -165,6 +174,17 @@ const AdminDashboard = () => {
 
   const yearOptions = Array.from({ length: 5 }).map((_, idx) => new Date().getFullYear() - idx);
 
+  const getStatusChipColor = (status) => {
+    const palette = {
+      Pending: '#f59e0b',
+      Processing: '#38bdf8',
+      Shipped: '#6366f1',
+      Delivered: '#22c55e',
+      Cancelled: '#ef4444',
+    };
+    return palette[status] || '#9ca3af';
+  };
+
   if (statsLoading) {
     return (
       <Box sx={{ width: '100%' }}>
@@ -175,12 +195,77 @@ const AdminDashboard = () => {
 
   return (
     <Box>
-      <Typography variant="h4" fontWeight={800} sx={{ mb: 1 }}>
-        Dashboard Overview
-      </Typography>
-      <Typography variant="body1" color="text.secondary" sx={{ mb: 4 }}>
-        Monitor your helmet empire at a glance.
-      </Typography>
+      <Box
+        sx={{
+          mb: 4,
+          borderRadius: 4,
+          p: { xs: 3, md: 4 },
+          background: 'linear-gradient(135deg, rgba(5,5,5,0.95), rgba(255,107,53,0.18))',
+          border: '1px solid rgba(255,107,53,0.35)',
+          display: 'flex',
+          flexDirection: { xs: 'column', lg: 'row' },
+          gap: 3,
+        }}
+      >
+        <Box sx={{ flex: 1 }}>
+          <Typography variant="overline" sx={{ color: 'text.secondary', letterSpacing: 4 }}>
+            COMMAND CENTER
+          </Typography>
+          <Typography variant="h3" fontWeight={800} sx={{ lineHeight: 1.2 }}>
+            Welcome back, {user?.name?.split(' ')[0] || 'Aegis'}.
+          </Typography>
+          <Typography variant="body1" color="text.secondary" sx={{ mt: 1.5, maxWidth: 520 }}>
+            Keep riders protected and operations lean with live telemetry across sales, orders, and gear status.
+          </Typography>
+          <Stack direction={{ xs: 'column', sm: 'row' }} spacing={2} sx={{ mt: 3 }}>
+            <Button variant="contained" startIcon={<AutoGraph />}>
+              View Reports
+            </Button>
+            <Button variant="outlined" color="inherit" startIcon={<Shield />}>
+              Security Center
+            </Button>
+          </Stack>
+        </Box>
+        <Box
+          sx={{
+            flex: 1,
+            p: 3,
+            borderRadius: 3,
+            background: 'rgba(0,0,0,0.65)',
+            border: '1px solid rgba(255,255,255,0.08)',
+          }}
+        >
+          <Typography variant="subtitle2" color="text.secondary">
+            Order Status Snapshot
+          </Typography>
+          <Stack spacing={1.5} sx={{ mt: 2 }}>
+            {statusSummary.slice(0, 4).map((status) => (
+              <Box key={status._id} sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                  <Box
+                    sx={{
+                      width: 10,
+                      height: 10,
+                      borderRadius: '50%',
+                      bgcolor: getStatusChipColor(status._id),
+                    }}
+                  />
+                  <Typography variant="body2" sx={{ textTransform: 'capitalize' }}>
+                    {status._id}
+                  </Typography>
+                </Box>
+                <Typography variant="body1" fontWeight={700}>
+                  {status.count}
+                </Typography>
+              </Box>
+            ))}
+          </Stack>
+          <Divider sx={{ my: 2, borderColor: 'rgba(255,255,255,0.08)' }} />
+          <Typography variant="caption" color="text.secondary">
+            Last sync: {new Date().toLocaleTimeString()}
+          </Typography>
+        </Box>
+      </Box>
 
       <Grid container spacing={3} sx={{ mb: 4 }}>
         {statCards.map((card) => (
@@ -329,6 +414,97 @@ const AdminDashboard = () => {
                 </ResponsiveContainer>
               )}
             </Box>
+          </Card>
+        </Grid>
+      </Grid>
+
+      <Grid container spacing={3} sx={{ mb: 4 }}>
+        <Grid item xs={12} md={6}>
+          <Card
+            sx={{
+              borderRadius: 4,
+              border: '1px solid rgba(255,255,255,0.08)',
+              bgcolor: 'background.paper',
+              height: '100%',
+            }}
+          >
+            <Box sx={{ p: 3, borderBottom: '1px solid rgba(255,255,255,0.05)' }}>
+              <Typography variant="h6" fontWeight={700}>
+                Revenue Pulse
+              </Typography>
+              <Typography variant="body2" color="text.secondary">
+                Rolling 30-day snapshot
+              </Typography>
+            </Box>
+            <Box sx={{ height: 260, p: 2 }}>
+              {rangeChartData.length === 0 ? (
+                <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100%' }}>
+                  <Typography variant="body2" color="text.secondary">
+                    Not enough data yet.
+                  </Typography>
+                </Box>
+              ) : (
+                <ResponsiveContainer width="100%" height="100%">
+                  <AreaChart data={rangeChartData.slice(-15)}>
+                    <defs>
+                      <linearGradient id="colorSales" x1="0" y1="0" x2="0" y2="1">
+                        <stop offset="5%" stopColor="#FF6B35" stopOpacity={0.8} />
+                        <stop offset="95%" stopColor="#FF6B35" stopOpacity={0} />
+                      </linearGradient>
+                    </defs>
+                    <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.08)" />
+                    <XAxis dataKey="dateLabel" stroke="rgba(255,255,255,0.6)" />
+                    <YAxis stroke="rgba(255,255,255,0.6)" />
+                    <Tooltip />
+                    <Area type="monotone" dataKey="sales" stroke="#FF6B35" fillOpacity={1} fill="url(#colorSales)" />
+                  </AreaChart>
+                </ResponsiveContainer>
+              )}
+            </Box>
+          </Card>
+        </Grid>
+        <Grid item xs={12} md={6}>
+          <Card
+            sx={{
+              borderRadius: 4,
+              border: '1px solid rgba(255,255,255,0.08)',
+              bgcolor: 'background.paper',
+              p: 3,
+              height: '100%',
+            }}
+          >
+            <Typography variant="h6" fontWeight={700}>
+              Ops Radar
+            </Typography>
+            <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
+              Quick metrics keeping riders on the road.
+            </Typography>
+            <Grid container spacing={2}>
+              {[
+                { label: 'Avg. Fulfillment', value: '1.8 days' },
+                { label: 'Top Payment', value: 'GCash' },
+                { label: 'Return Rate', value: '0.4%' },
+                { label: 'Support Tickets', value: '5 open' },
+              ].map((metric) => (
+                <Grid item xs={6} key={metric.label}>
+                  <Box
+                    sx={{
+                      borderRadius: 3,
+                      p: 2,
+                      bgcolor: 'rgba(255,255,255,0.02)',
+                      border: '1px solid rgba(255,255,255,0.05)',
+                    }}
+                  >
+                    <Typography variant="caption" color="text.secondary">
+                      {metric.label}
+                    </Typography>
+                    <Typography variant="h6" fontWeight={700}>
+                      {metric.value}
+                    </Typography>
+                  </Box>
+                </Grid>
+              ))}
+            </Grid>
           </Card>
         </Grid>
       </Grid>

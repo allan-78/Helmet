@@ -1,4 +1,4 @@
-import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
+import { BrowserRouter as Router, Routes, Route, useLocation } from 'react-router-dom';
 import { Box } from '@mui/material';
 import Header from './components/common/Header';
 import Footer from './components/common/Footer';
@@ -27,13 +27,15 @@ import AdminProducts from './pages/admin/AdminProducts';
 import AdminOrders from './pages/admin/AdminOrders';
 import AdminUsers from './pages/admin/AdminUsers';
 
-function App() {
+const AppContent = () => {
+  const location = useLocation();
+  const isAdminRoute = location.pathname.startsWith('/admin');
+
   return (
-    <Router>
-      <Box sx={{ display: 'flex', flexDirection: 'column', minHeight: '100vh' }}>
-        <Header />
-        <Box component="main" sx={{ flexGrow: 1, pt: 8 }}>
-          <Routes>
+    <Box sx={{ display: 'flex', flexDirection: 'column', minHeight: '100vh' }}>
+      {!isAdminRoute && <Header />}
+      <Box component="main" sx={{ flexGrow: 1, pt: isAdminRoute ? 0 : 8 }}>
+        <Routes>
             {/* Public Routes */}
             <Route path="/" element={<HomePage />} />
             <Route path="/products" element={<ProductsPage />} />
@@ -108,9 +110,16 @@ function App() {
             </Route>
             <Route path="/about" element={<About />} />
           </Routes>
-        </Box>
-        <Footer />
       </Box>
+      {!isAdminRoute && <Footer />}
+    </Box>
+  );
+};
+
+function App() {
+  return (
+    <Router>
+      <AppContent />
     </Router>
   );
 }
