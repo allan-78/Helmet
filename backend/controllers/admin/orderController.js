@@ -1,6 +1,6 @@
 const Order = require('../../models/Order');
 const { generateOrderReceipt } = require('../../utils/pdfGenerator');
-const { sendEmail } = require('../../utils/emailService');
+const { sendEmail, sendOrderStatusUpdateEmail } = require('../../utils/emailService');
 const fs = require('fs');
 
 // @desc    Get all orders
@@ -68,19 +68,11 @@ exports.updateOrderStatus = async (req, res) => {
 
     await order.save();
 
-    // Send email notification
+    // Send email notification with PDF receipt
     try {
-      await sendEmail({
-        email: order.user.email,
-        subject: `Order ${status} - AegisGear`,
-        html: `
-          <h2>Order Status Updated</h2>
-          <p>Hi ${order.user.name},</p>
-          <p>Your order #${order._id} status has been updated to: <strong>${status}</strong></p>
-          ${note ? `<p>Note: ${note}</p>` : ''}
-          <p>Thank you for shopping with AegisGear!</p>
-        `,
-      });
+      const receiptPath = await generateOrderReceipt(order);
+      await sendOrderStatusUpdateEmail(order, receiptPath);
+      fs.unlink(receiptPath, () => {});
     } catch (emailError) {
       console.error('Email send failed:', emailError);
     }

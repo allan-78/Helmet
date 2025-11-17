@@ -1,4 +1,4 @@
-import { useCart } from '../../context/CartContext';
+import { useCart } from '../../context/CartContext'; 
 import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import {
@@ -26,6 +26,7 @@ import { useAuth } from '../../context/AuthContext';
 const Header = () => {
   const { user, isAuthenticated, isAdmin, logout } = useAuth();
   const navigate = useNavigate();
+  const { itemCount } = useCart();
   const [anchorEl, setAnchorEl] = useState(null);
 
   const handleMenuOpen = (event) => {
@@ -41,7 +42,6 @@ const Header = () => {
     handleMenuClose();
     navigate('/');
   };
-  const { itemCount } = useCart();
 
   return (
     <AppBar position="fixed" sx={{ background: 'rgba(10, 10, 10, 0.95)', backdropFilter: 'blur(10px)' }}>
@@ -86,11 +86,13 @@ const Header = () => {
           {/* Right Side Icons */}
           <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
             {/* Cart Icon */}
-            <IconButton color="inherit" component={Link} to="/cart">
-              <Badge badgeContent={0} color="primary">
-                <ShoppingCart />
-              </Badge>
-            </IconButton>
+            {isAuthenticated && (
+              <IconButton color="inherit" component={Link} to="/cart">
+                <Badge badgeContent={itemCount} color="primary">
+                  <ShoppingCart />
+                </Badge>
+              </IconButton>
+            )}
 
             {/* User Menu or Login */}
             {isAuthenticated ? (

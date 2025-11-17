@@ -17,44 +17,48 @@ import { auth, googleProvider, facebookProvider } from '../../firebase';
 import { useAuth } from '../../context/AuthContext';
 import api from '../../services/api';
 import { toast } from 'react-toastify';
+import { useForm, Controller } from 'react-hook-form';
+import { yupResolver } from '@hookform/resolvers/yup';
+import * as yup from 'yup';
 
 const RegisterPage = () => {
   const navigate = useNavigate();
   const { login } = useAuth();
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
-  const [formData, setFormData] = useState({
-    name: '',
-    email: '',
-    password: '',
-    confirmPassword: '',
+
+  const schema = yup.object({
+    name: yup.string().required('Full name is required'),
+    email: yup.string().email('Enter a valid email').required('Email is required'),
+    password: yup.string().min(6, 'Password must be at least 6 characters').required('Password is required'),
+    confirmPassword: yup
+      .string()
+      .oneOf([yup.ref('password')], 'Passwords must match')
+      .required('Confirm your password'),
   });
 
-  const handleChange = (e) => {
-    setFormData({ ...formData, [e.target.name]: e.target.value });
-  };
+  const {
+    control,
+    handleSubmit,
+    formState: { errors },
+  } = useForm({
+    defaultValues: {
+      name: '',
+      email: '',
+      password: '',
+      confirmPassword: '',
+    },
+    resolver: yupResolver(schema),
+  });
 
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-
-    // Validation
-    if (formData.password !== formData.confirmPassword) {
-      toast.error('Passwords do not match');
-      return;
-    }
-
-    if (formData.password.length < 6) {
-      toast.error('Password must be at least 6 characters');
-      return;
-    }
-
+  const onSubmit = async (values) => {
     setLoading(true);
 
     try {
       const { data } = await api.post('/auth/register', {
-        name: formData.name,
-        email: formData.email,
-        password: formData.password,
+        name: values.name,
+        email: values.email,
+        password: values.password,
       });
 
       login(data.user, data.token);
@@ -116,8 +120,22 @@ const RegisterPage = () => {
   };
 
   return (
-    <Container maxWidth="sm" sx={{ py: 8 }}>
-      <Paper elevation={3} sx={{ p: 4 }}>
+    <Box
+      sx={{
+        minHeight: '100vh',
+        background: 'radial-gradient(circle at top, rgba(255,107,53,0.15), transparent 60%)',
+        py: 6,
+      }}
+    >
+      <Container maxWidth="sm">
+        <Paper
+          sx={{
+            p: { xs: 3, md: 4 },
+            borderRadius: 4,
+            background: 'rgba(15,15,15,0.95)',
+            border: '1px solid rgba(255,255,255,0.08)',
+          }}
+        >
         {/* Header */}
         <Box sx={{ textAlign: 'center', mb: 4 }}>
           <Typography
@@ -165,60 +183,78 @@ const RegisterPage = () => {
         </Divider>
 
         {/* Register Form */}
-        <form onSubmit={handleSubmit}>
-          <TextField
-            fullWidth
-            label="Full Name"
+        <form onSubmit={handleSubmit(onSubmit)}>
+          <Controller
             name="name"
-            value={formData.name}
-            onChange={handleChange}
-            required
-            sx={{ mb: 2 }}
+            control={control}
+            render={({ field }) => (
+              <TextField
+                {...field}
+                fullWidth
+                label="Full Name"
+                error={!!errors.name}
+                helperText={errors.name?.message}
+                sx={{ mb: 2 }}
+              />
+            )}
           />
 
-          <TextField
-            fullWidth
-            label="Email"
+          <Controller
             name="email"
-            type="email"
-            value={formData.email}
-            onChange={handleChange}
-            required
-            sx={{ mb: 2 }}
+            control={control}
+            render={({ field }) => (
+              <TextField
+                {...field}
+                fullWidth
+                label="Email"
+                type="email"
+                error={!!errors.email}
+                helperText={errors.email?.message}
+                sx={{ mb: 2 }}
+              />
+            )}
           />
 
-          <TextField
-            fullWidth
-            label="Password"
+          <Controller
             name="password"
-            type={showPassword ? 'text' : 'password'}
-            value={formData.password}
-            onChange={handleChange}
-            required
-            helperText="At least 6 characters"
-            sx={{ mb: 2 }}
-            InputProps={{
-              endAdornment: (
-                <InputAdornment position="end">
-                  <IconButton onClick={() => setShowPassword(!showPassword)} edge="end">
-                    {showPassword ? <VisibilityOff /> : <Visibility />}
-                  </IconButton>
-                </InputAdornment>
-              ),
-            }}
+            control={control}
+            render={({ field }) => (
+              <TextField
+                {...field}
+                fullWidth
+                label="Password"
+                type={showPassword ? 'text' : 'password'}
+                helperText={errors.password?.message || 'At least 6 characters'}
+                error={!!errors.password}
+                sx={{ mb: 2 }}
+                InputProps={{
+                  endAdornment: (
+                    <InputAdornment position="end">
+                      <IconButton onClick={() => setShowPassword(!showPassword)} edge="end">
+                        {showPassword ? <VisibilityOff /> : <Visibility />}
+                      </IconButton>
+                    </InputAdornment>
+                  ),
+                }}
+              />
+            )}
           />
 
-          <TextField
-            fullWidth
-            label="Confirm Password"
+          <Controller
             name="confirmPassword"
-            type={showPassword ? 'text' : 'password'}
-            value={formData.confirmPassword}
-            onChange={handleChange}
-            required
-            sx={{ mb: 3 }}
+            control={control}
+            render={({ field }) => (
+              <TextField
+                {...field}
+                fullWidth
+                label="Confirm Password"
+                type={showPassword ? 'text' : 'password'}
+                error={!!errors.confirmPassword}
+                helperText={errors.confirmPassword?.message}
+                sx={{ mb: 3 }}
+              />
+            )}
           />
-
           <Button
             fullWidth
             type="submit"
@@ -244,8 +280,9 @@ const RegisterPage = () => {
             </Typography>
           </Box>
         </form>
-      </Paper>
-    </Container>
+        </Paper>
+      </Container>
+    </Box>
   );
 };
 

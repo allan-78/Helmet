@@ -170,6 +170,38 @@ exports.getProductReviews = async (req, res) => {
   }
 };
 
+// @desc    Check if user can review product & fetch existing review
+// @route   GET /api/reviews/product/:productId/eligibility
+// @access  Private
+exports.getReviewEligibility = async (req, res) => {
+  try {
+    const productId = req.params.productId;
+
+    const deliveredOrder = await Order.findOne({
+      user: req.user._id,
+      'orderItems.product': productId,
+      orderStatus: 'Delivered',
+    });
+
+    const review = await Review.findOne({
+      user: req.user._id,
+      product: productId,
+    });
+
+    res.status(200).json({
+      success: true,
+      canReview: !!deliveredOrder,
+      review,
+    });
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      message: 'Failed to check review eligibility',
+      error: error.message,
+    });
+  }
+};
+
 // Helper function to update product rating
 const updateProductRating = async (productId) => {
   const reviews = await Review.find({ product: productId });

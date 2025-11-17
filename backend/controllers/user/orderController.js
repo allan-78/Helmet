@@ -1,6 +1,8 @@
+const fs = require('fs');
 const Order = require('../../models/Order');
 const Product = require('../../models/Product');
 const Cart = require('../../models/Cart');
+const { generateOrderReceipt } = require('../../utils/pdfGenerator');
 const { sendOrderConfirmationEmail } = require('../../utils/emailService');
 
 // @desc    Checkout / Create order
@@ -59,9 +61,13 @@ exports.checkout = async (req, res) => {
       { items: [], totalPrice: 0 }
     );
 
-    // Send confirmation email
+    await order.populate('user', 'name email');
+
+    // Send confirmation email with PDF receipt
     try {
-      await sendOrderConfirmationEmail(req.user.email, order);
+      const receiptPath = await generateOrderReceipt(order);
+      await sendOrderConfirmationEmail(order, receiptPath);
+      fs.unlink(receiptPath, () => {});
     } catch (emailError) {
       console.error('Failed to send order confirmation email:', emailError);
     }

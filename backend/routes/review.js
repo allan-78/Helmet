@@ -5,6 +5,7 @@ const {
   updateReview,
   deleteReview,
   getProductReviews,
+  getReviewEligibility,
 } = require('../controllers/reviewController');
 const { protect, authorize } = require('../middleware/auth');
 const { filterReviewContent } = require('../middleware/badWordsFilter'); // ✅ Already here
@@ -14,6 +15,7 @@ const {
 } = require('../middleware/validators');
 
 router.get('/product/:productId', getProductReviews);
+router.get('/product/:productId/eligibility', protect, getReviewEligibility);
 
 router.post(
   '/', 

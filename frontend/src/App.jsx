@@ -16,6 +16,10 @@ import OrderSuccessPage from './pages/user/OrderSuccessPage';
 import OrdersPage from './pages/user/OrdersPage';
 import OrderDetailPage from './pages/user/OrderDetailPage';
 import ProfilePage from './pages/user/ProfilePage';
+import About from './pages/user/About'; 
+import ForgotPasswordPage from './pages/user/ForgotPasswordPage';
+import ResetPasswordPage from './pages/user/ResetPasswordPage';
+import AdminLayout from './components/admin/AdminLayout';
 
 // Admin Pages
 import AdminDashboard from './pages/admin/AdminDashboard';
@@ -36,14 +40,22 @@ function App() {
             <Route path="/products/:id" element={<ProductDetailPage />} />
             <Route path="/login" element={<LoginPage />} />
             <Route path="/register" element={<RegisterPage />} />
-            <Route path="/cart" element={<CartPage />} />
-
+            <Route path="/forgot-password" element={<ForgotPasswordPage />} />
+            <Route path="/reset-password/:token" element={<ResetPasswordPage />} />
             {/* Protected User Routes */}
             <Route
               path="/checkout"
               element={
                 <ProtectedRoute>
                   <CheckoutPage />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/cart"
+              element={
+                <ProtectedRoute>
+                  <CartPage />
                 </ProtectedRoute>
               }
             />
@@ -82,37 +94,19 @@ function App() {
 
             {/* Admin Routes */}
             <Route
-              path="/admin"
+              path="/admin/*"
               element={
                 <ProtectedRoute adminOnly>
-                  <AdminDashboard />
+                  <AdminLayout />
                 </ProtectedRoute>
               }
-            />
-            <Route
-              path="/admin/products"
-              element={
-                <ProtectedRoute adminOnly>
-                  <AdminProducts />
-                </ProtectedRoute>
-              }
-            />
-            <Route
-              path="/admin/orders"
-              element={
-                <ProtectedRoute adminOnly>
-                  <AdminOrders />
-                </ProtectedRoute>
-              }
-            />
-            <Route
-              path="/admin/users"
-              element={
-                <ProtectedRoute adminOnly>
-                  <AdminUsers />
-                </ProtectedRoute>
-              }
-            />
+            >
+              <Route index element={<AdminDashboard />} />
+              <Route path="products" element={<AdminProducts />} />
+              <Route path="orders" element={<AdminOrders />} />
+              <Route path="users" element={<AdminUsers />} />
+            </Route>
+            <Route path="/about" element={<About />} />
           </Routes>
         </Box>
         <Footer />

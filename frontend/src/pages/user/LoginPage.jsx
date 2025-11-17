@@ -17,27 +17,37 @@ import { auth, googleProvider, facebookProvider } from '../../firebase';
 import { useAuth } from '../../context/AuthContext';
 import api from '../../services/api';
 import { toast } from 'react-toastify';
+import { useForm, Controller } from 'react-hook-form';
+import { yupResolver } from '@hookform/resolvers/yup';
+import * as yup from 'yup';
 
 const LoginPage = () => {
   const navigate = useNavigate();
   const { login } = useAuth();
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
-  const [formData, setFormData] = useState({
-    email: '',
-    password: '',
+
+  const schema = yup.object({
+    email: yup.string().email('Enter a valid email').required('Email is required'),
+    password: yup.string().min(6, 'Password must be at least 6 characters').required('Password is required'),
   });
 
-  const handleChange = (e) => {
-    setFormData({ ...formData, [e.target.name]: e.target.value });
-  };
+  const {
+    control,
+    handleSubmit,
+    formState: { errors },
+  } = useForm({
+    defaultValues: {
+      email: '',
+      password: '',
+    },
+    resolver: yupResolver(schema),
+  });
 
-  const handleSubmit = async (e) => {
-    e.preventDefault();
+  const onSubmit = async (values) => {
     setLoading(true);
-
     try {
-      const { data } = await api.post('/auth/login', formData);
+      const { data } = await api.post('/auth/login', values);
       login(data.user, data.token);
       toast.success('Login successful!');
       navigate('/');
@@ -97,8 +107,22 @@ const LoginPage = () => {
   };
 
   return (
-    <Container maxWidth="sm" sx={{ py: 8 }}>
-      <Paper elevation={3} sx={{ p: 4 }}>
+    <Box
+      sx={{
+        minHeight: '100vh',
+        background: 'radial-gradient(circle at top, rgba(255,107,53,0.15), transparent 60%)',
+        py: 6,
+      }}
+    >
+      <Container maxWidth="sm">
+        <Paper
+          sx={{
+            p: { xs: 3, md: 4 },
+            borderRadius: 4,
+            background: 'rgba(15,15,15,0.95)',
+            border: '1px solid rgba(255,255,255,0.08)',
+          }}
+        >
         {/* Header */}
         <Box sx={{ textAlign: 'center', mb: 4 }}>
           <Typography
@@ -146,36 +170,46 @@ const LoginPage = () => {
         </Divider>
 
         {/* Login Form */}
-        <form onSubmit={handleSubmit}>
-          <TextField
-            fullWidth
-            label="Email"
+        <form onSubmit={handleSubmit(onSubmit)}>
+          <Controller
             name="email"
-            type="email"
-            value={formData.email}
-            onChange={handleChange}
-            required
-            sx={{ mb: 2 }}
+            control={control}
+            render={({ field }) => (
+              <TextField
+                {...field}
+                fullWidth
+                label="Email"
+                type="email"
+                error={!!errors.email}
+                helperText={errors.email?.message}
+                sx={{ mb: 2 }}
+              />
+            )}
           />
 
-          <TextField
-            fullWidth
-            label="Password"
+          <Controller
             name="password"
-            type={showPassword ? 'text' : 'password'}
-            value={formData.password}
-            onChange={handleChange}
-            required
-            sx={{ mb: 2 }}
-            InputProps={{
-              endAdornment: (
-                <InputAdornment position="end">
-                  <IconButton onClick={() => setShowPassword(!showPassword)} edge="end">
-                    {showPassword ? <VisibilityOff /> : <Visibility />}
-                  </IconButton>
-                </InputAdornment>
-              ),
-            }}
+            control={control}
+            render={({ field }) => (
+              <TextField
+                {...field}
+                fullWidth
+                label="Password"
+                type={showPassword ? 'text' : 'password'}
+                error={!!errors.password}
+                helperText={errors.password?.message}
+                sx={{ mb: 2 }}
+                InputProps={{
+                  endAdornment: (
+                    <InputAdornment position="end">
+                      <IconButton onClick={() => setShowPassword(!showPassword)} edge="end">
+                        {showPassword ? <VisibilityOff /> : <Visibility />}
+                      </IconButton>
+                    </InputAdornment>
+                  ),
+                }}
+              />
+            )}
           />
 
           <Box sx={{ textAlign: 'right', mb: 3 }}>
@@ -211,8 +245,9 @@ const LoginPage = () => {
             </Typography>
           </Box>
         </form>
-      </Paper>
-    </Container>
+        </Paper>
+      </Container>
+    </Box>
   );
 };
 

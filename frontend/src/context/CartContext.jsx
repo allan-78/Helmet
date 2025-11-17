@@ -38,53 +38,48 @@ export const CartProvider = ({ children }) => {
     localStorage.setItem('cart', JSON.stringify(cartData));
   };
 
-  const addToCart = async (product, quantity, size, color) => {
+  const normalizeCartPayload = (productOrItem, quantity, size, color) => {
+    if (!productOrItem) {
+      throw new Error('No product provided to addToCart');
+    }
+
+    if (productOrItem.product) {
+      return {
+        product: productOrItem.product,
+        quantity: productOrItem.quantity || 1,
+        size: productOrItem.size || productOrItem.product.sizes?.[0] || 'Standard',
+        color: productOrItem.color || productOrItem.product.colors?.[0] || 'Matte Black',
+        price: productOrItem.price || productOrItem.product.discountPrice || productOrItem.product.price,
+      };
+    }
+
+    return {
+      product: productOrItem,
+      quantity: quantity || 1,
+      size: size || productOrItem.sizes?.[0] || 'Standard',
+      color: color || productOrItem.colors?.[0] || 'Matte Black',
+      price: productOrItem.discountPrice || productOrItem.price,
+    };
+  };
+
+  const addToCart = async (productOrItem, quantity, size, color) => {
+    if (!isAuthenticated) {
+      toast.info('Please log in to add helmets to your cart.');
+      return;
+    }
+
     setLoading(true);
     try {
-      if (isAuthenticated) {
-        const { data } = await api.post('/cart', {
-          productId: product._id,
-          quantity,
-          size,
-          color,
-        });
-        setCart(data.cart);
-        toast.success('Added to cart!');
-      } else {
-        // Local cart for non-authenticated users
-        const newItem = {
-          product,
-          quantity,
-          size,
-          color,
-          price: product.discountPrice || product.price,
-        };
-        
-        const existingItemIndex = cart.items.findIndex(
-          (item) =>
-            item.product._id === product._id &&
-            item.size === size &&
-            item.color === color
-        );
+      const payload = normalizeCartPayload(productOrItem, quantity, size, color);
 
-        let updatedItems;
-        if (existingItemIndex > -1) {
-          updatedItems = [...cart.items];
-          updatedItems[existingItemIndex].quantity += quantity;
-        } else {
-          updatedItems = [...cart.items, newItem];
-        }
-
-        const totalPrice = updatedItems.reduce(
-          (sum, item) => sum + item.price * item.quantity,
-          0
-        );
-
-        const updatedCart = { items: updatedItems, totalPrice };
-        setCart(updatedCart);
-        saveLocalCart(updatedCart);
-        toast.success('Added to cart!');
-      }
+      const { data } = await api.post('/cart', {
+        productId: payload.product._id,
+        quantity: payload.quantity,
+        size: payload.size,
+        color: payload.color,
+      });
+      setCart(data.cart);
+      toast.success('Added to cart!');
     } catch (error) {
       toast.error('Failed to add to cart');
       console.error(error);
