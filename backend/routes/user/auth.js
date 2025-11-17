@@ -7,6 +7,7 @@ const {
   forgotPassword,
   resetPassword,
   logout,
+  verifyEmail, // <-- Import verifyEmail
 } = require('../../controllers/user/authController');
 const {
   registerValidation,
@@ -21,5 +22,7 @@ router.post('/firebase-login', firebaseLogin);
 router.post('/forgot-password', forgotPassword);
 router.put('/reset-password/:token', resetPassword);
 router.post('/logout', protect, logout);
+
+router.get('/verify-email/:token', verifyEmail); // <-- Add this new route
 
 module.exports = router;

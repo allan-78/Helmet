@@ -23,6 +23,9 @@ const adminProductRoutes = require('./routes/admin/product');
 const adminOrderRoutes = require('./routes/admin/order');
 const adminUserRoutes = require('./routes/admin/user');
 const adminDashboardRoutes = require('./routes/admin/dashboard');
+const adminCategoryRoutes = require('./routes/admin/category');
+const adminBrandRoutes = require('./routes/admin/brand');
+const adminReviewRoutes = require('./routes/admin/review');
 
 const app = express();
 
@@ -98,6 +101,9 @@ app.use('/api/admin/products', adminProductRoutes);
 app.use('/api/admin/orders', adminOrderRoutes);
 app.use('/api/admin/users', adminUserRoutes);
 app.use('/api/admin/dashboard', adminDashboardRoutes);
+app.use('/api/admin/categories', adminCategoryRoutes);
+app.use('/api/admin/brands', adminBrandRoutes);
+app.use('/api/admin/reviews', adminReviewRoutes);
 
 // 404 handler
 app.use((req, res) => {

@@ -166,6 +166,7 @@ const AdminProducts = () => {
       id: `${file.name}-${file.size}-${file.lastModified}`,
     }));
     setSelectedImages((prev) => [...prev, ...mapped]);
+    event.target.value = '';
   };
 
   const handleRemoveImage = (id) => {
@@ -444,135 +445,196 @@ const AdminProducts = () => {
 
       {/* Add/Edit Dialog */}
       <Dialog open={openDialog} onClose={handleCloseDialog} maxWidth="md" fullWidth>
-        <DialogTitle>{editingProduct ? 'Edit Product' : 'Add New Product'}</DialogTitle>
-        <DialogContent>
-          <Grid container spacing={2} sx={{ mt: 1 }}>
-            <Grid item xs={12}>
-              <Controller
-                name="name"
-                control={control}
-                render={({ field }) => (
-                  <TextField
-                    {...field}
-                    fullWidth
-                    label="Product Name"
-                    error={!!errors.name}
-                    helperText={errors.name?.message}
+        <DialogTitle
+          sx={{
+            pb: 1,
+          }}
+        >
+          <Box>
+            <Typography variant="h5" component="div" fontWeight={700}>
+              {editingProduct ? 'Edit Product' : 'Add New Product'}
+            </Typography>
+            <Typography variant="body2" color="text.secondary" component="div">
+              {editingProduct ? 'Refresh specs and imagery for this helmet.' : 'Launch a new helmet into the catalog.'}
+            </Typography>
+          </Box>
+        </DialogTitle>
+        <DialogContent
+          dividers
+          sx={{
+            background: 'radial-gradient(circle at top, rgba(255,107,53,0.08), rgba(8,8,8,0.95))',
+          }}
+        >
+          <Stack spacing={3}>
+            <Paper
+              variant="outlined"
+              sx={{
+                p: 3,
+                borderRadius: 3,
+                borderColor: 'rgba(255,255,255,0.08)',
+                background: 'rgba(0,0,0,0.35)',
+              }}
+            >
+              <Typography variant="subtitle2" color="text.secondary" sx={{ mb: 2, letterSpacing: 2 }}>
+                PRODUCT DETAILS
+              </Typography>
+              <Grid container spacing={2}>
+                <Grid item xs={12}>
+                  <Controller
+                    name="name"
+                    control={control}
+                    render={({ field }) => (
+                      <TextField
+                        {...field}
+                        fullWidth
+                        label="Product Name"
+                        error={!!errors.name}
+                        helperText={errors.name?.message}
+                      />
+                    )}
                   />
-                )}
-              />
-            </Grid>
-            <Grid item xs={12}>
-              <Controller
-                name="description"
-                control={control}
-                render={({ field }) => (
-                  <TextField
-                    {...field}
-                    fullWidth
-                    label="Description"
-                    multiline
-                    rows={3}
-                    error={!!errors.description}
-                    helperText={errors.description?.message}
+                </Grid>
+                <Grid item xs={12}>
+                  <Controller
+                    name="description"
+                    control={control}
+                    render={({ field }) => (
+                      <TextField
+                        {...field}
+                        fullWidth
+                        label="Description"
+                        multiline
+                        rows={3}
+                        error={!!errors.description}
+                        helperText={errors.description?.message}
+                      />
+                    )}
                   />
-                )}
-              />
-            </Grid>
-            <Grid item xs={12} sm={6}>
-              <Controller
-                name="price"
-                control={control}
-                render={({ field }) => (
-                  <TextField
-                    {...field}
-                    fullWidth
-                    label="Price"
-                    type="number"
-                    error={!!errors.price}
-                    helperText={errors.price?.message}
+                </Grid>
+              </Grid>
+            </Paper>
+
+            <Paper
+              variant="outlined"
+              sx={{
+                p: 3,
+                borderRadius: 3,
+                borderColor: 'rgba(255,255,255,0.08)',
+                background: 'rgba(0,0,0,0.35)',
+              }}
+            >
+              <Typography variant="subtitle2" color="text.secondary" sx={{ mb: 2, letterSpacing: 2 }}>
+                INVENTORY & METRICS
+              </Typography>
+              <Grid container spacing={2}>
+                <Grid item xs={12} sm={6}>
+                  <Controller
+                    name="price"
+                    control={control}
+                    render={({ field }) => (
+                      <TextField
+                        {...field}
+                        fullWidth
+                        label="Price"
+                        type="number"
+                        error={!!errors.price}
+                        helperText={errors.price?.message}
+                      />
+                    )}
                   />
-                )}
-              />
-            </Grid>
-            <Grid item xs={12} sm={6}>
-              <Controller
-                name="stock"
-                control={control}
-                render={({ field }) => (
-                  <TextField
-                    {...field}
-                    fullWidth
-                    label="Stock"
-                    type="number"
-                    error={!!errors.stock}
-                    helperText={errors.stock?.message}
+                </Grid>
+                <Grid item xs={12} sm={6}>
+                  <Controller
+                    name="stock"
+                    control={control}
+                    render={({ field }) => (
+                      <TextField
+                        {...field}
+                        fullWidth
+                        label="Stock"
+                        type="number"
+                        error={!!errors.stock}
+                        helperText={errors.stock?.message}
+                      />
+                    )}
                   />
-                )}
-              />
-            </Grid>
-            <Grid item xs={12} sm={6}>
-              <Controller
-                name="category"
-                control={control}
-                render={({ field }) => (
-                  <TextField
-                    {...field}
-                    fullWidth
-                    select
-                    label="Category"
-                    error={!!errors.category}
-                    helperText={errors.category?.message}
-                  >
-                    {categories.map((cat) => (
-                      <MenuItem key={cat._id} value={cat._id}>
-                        {cat.name}
-                      </MenuItem>
-                    ))}
-                  </TextField>
-                )}
-              />
-            </Grid>
-            <Grid item xs={12} sm={6}>
-              <Controller
-                name="brand"
-                control={control}
-                render={({ field }) => (
-                  <TextField
-                    {...field}
-                    fullWidth
-                    select
-                    label="Brand"
-                    error={!!errors.brand}
-                    helperText={errors.brand?.message}
-                  >
-                    {brands.map((brand) => (
-                      <MenuItem key={brand._id} value={brand._id}>
-                        {brand.name}
-                      </MenuItem>
-                    ))}
-                  </TextField>
-                )}
-              />
-            </Grid>
-            <Grid item xs={12}>
-              <Controller
-                name="weight"
-                control={control}
-                render={({ field }) => (
-                  <TextField
-                    {...field}
-                    fullWidth
-                    label="Weight (grams)"
-                    type="number"
-                    error={!!errors.weight}
-                    helperText={errors.weight?.message}
+                </Grid>
+                <Grid item xs={12} sm={6}>
+                  <Controller
+                    name="category"
+                    control={control}
+                    render={({ field }) => (
+                      <TextField
+                        {...field}
+                        fullWidth
+                        select
+                        label="Category"
+                        error={!!errors.category}
+                        helperText={errors.category?.message}
+                      >
+                        {categories.map((cat) => (
+                          <MenuItem key={cat._id} value={cat._id}>
+                            {cat.name}
+                          </MenuItem>
+                        ))}
+                      </TextField>
+                    )}
                   />
-                )}
-              />
-            </Grid>
-            <Grid item xs={12}>
-              <Button variant="outlined" component="label">
+                </Grid>
+                <Grid item xs={12} sm={6}>
+                  <Controller
+                    name="brand"
+                    control={control}
+                    render={({ field }) => (
+                      <TextField
+                        {...field}
+                        fullWidth
+                        select
+                        label="Brand"
+                        error={!!errors.brand}
+                        helperText={errors.brand?.message}
+                      >
+                        {brands.map((brand) => (
+                          <MenuItem key={brand._id} value={brand._id}>
+                            {brand.name}
+                          </MenuItem>
+                        ))}
+                      </TextField>
+                    )}
+                  />
+                </Grid>
+                <Grid item xs={12}>
+                  <Controller
+                    name="weight"
+                    control={control}
+                    render={({ field }) => (
+                      <TextField
+                        {...field}
+                        fullWidth
+                        label="Weight (grams)"
+                        type="number"
+                        error={!!errors.weight}
+                        helperText={errors.weight?.message}
+                      />
+                    )}
+                  />
+                </Grid>
+              </Grid>
+            </Paper>
+
+            <Paper
+              variant="outlined"
+              sx={{
+                p: 3,
+                borderRadius: 3,
+                borderColor: 'rgba(255,255,255,0.08)',
+                background: 'rgba(0,0,0,0.35)',
+              }}
+            >
+              <Typography variant="subtitle2" color="text.secondary" sx={{ mb: 2, letterSpacing: 2 }}>
+                MEDIA
+              </Typography>
+              <Button variant="outlined" component="label" sx={{ borderRadius: 999 }}>
                 Upload Images
                 <input type="file" hidden multiple accept="image/*" onChange={handleImageSelect} />
               </Button>
@@ -587,26 +649,21 @@ const AdminProducts = () => {
                     key={img.id}
                     sx={{
                       position: 'relative',
-                      width: 80,
-                      height: 80,
+                      width: 88,
+                      height: 88,
                       borderRadius: 2,
                       overflow: 'hidden',
                       border: '1px solid rgba(255,255,255,0.1)',
                     }}
                   >
-                    <Box
-                      component="img"
-                      src={img.preview}
-                      alt="preview"
-                      sx={{ width: '100%', height: '100%', objectFit: 'cover' }}
-                    />
+                    <Box component="img" src={img.preview} alt="preview" sx={{ width: '100%', height: '100%', objectFit: 'cover' }} />
                     <Button
                       size="small"
                       onClick={() => handleRemoveImage(img.id)}
                       sx={{
                         position: 'absolute',
-                        top: 0,
-                        right: 0,
+                        top: 4,
+                        right: 4,
                         minWidth: 0,
                         p: 0.5,
                         bgcolor: 'rgba(0,0,0,0.6)',
@@ -618,34 +675,34 @@ const AdminProducts = () => {
                   </Box>
                 ))}
               </Box>
-            </Grid>
-            {editingProduct && editingProduct.images?.length > 0 && (
-              <Grid item xs={12}>
-                <Typography variant="subtitle2" sx={{ mb: 1 }}>
-                  Current Gallery
-                </Typography>
-                <Stack direction="row" spacing={1} flexWrap="wrap">
-                  {editingProduct.images.map((img) => (
-                    <Avatar
-                      key={img.publicId}
-                      variant="rounded"
-                      src={img.url}
-                      sx={{ width: 56, height: 56, borderRadius: 2 }}
-                    />
-                  ))}
-                </Stack>
-              </Grid>
-            )}
-          </Grid>
+              {editingProduct && editingProduct.images?.length > 0 && (
+                <Box sx={{ mt: 3 }}>
+                  <Typography variant="subtitle2" sx={{ mb: 1 }}>
+                    Current Gallery
+                  </Typography>
+                  <Stack direction="row" spacing={1} flexWrap="wrap">
+                    {editingProduct.images.map((img) => (
+                      <Avatar
+                        key={img.publicId}
+                        variant="rounded"
+                        src={img.url}
+                        sx={{ width: 56, height: 56, borderRadius: 2 }}
+                      />
+                    ))}
+                  </Stack>
+                </Box>
+              )}
+            </Paper>
+          </Stack>
         </DialogContent>
-        <DialogActions>
+        <DialogActions sx={{ px: 3, py: 2 }}>
           <Button onClick={handleCloseDialog}>Cancel</Button>
           <Button
             onClick={handleSubmit(onSubmit)}
             variant="contained"
             sx={{ background: 'linear-gradient(135deg, #FF6B35 0%, #FF8C42 100%)' }}
           >
-            {editingProduct ? 'Update' : 'Create'}
+            {editingProduct ? 'Update Helmet' : 'Create Helmet'}
           </Button>
         </DialogActions>
       </Dialog>

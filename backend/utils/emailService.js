@@ -6,10 +6,15 @@ const createTransporter = () => {
   const host = resolveEnv(process.env.EMAIL_HOST, process.env.SMTP_HOST) || 'smtp.gmail.com';
   const port = Number(resolveEnv(process.env.EMAIL_PORT, process.env.SMTP_PORT) || 587);
   const user = resolveEnv(process.env.EMAIL_USER, process.env.SMTP_USER || process.env.GMAIL_USER);
+  
+  // --- THIS IS THE CORRECTED LINE ---
+  // It now looks for EMAIL_PASS first to match your .env file
   const pass = resolveEnv(
-    process.env.EMAIL_PASSWORD,
-    process.env.SMTP_PASS || process.env.GMAIL_APP_PASSWORD
+    process.env.EMAIL_PASS, 
+    process.env.EMAIL_PASSWORD || process.env.SMTP_PASS || process.env.GMAIL_APP_PASSWORD
   );
+  // --- END OF FIX ---
+
   const secure =
     process.env.EMAIL_SECURE !== undefined
       ? process.env.EMAIL_SECURE === 'true'
@@ -18,7 +23,7 @@ const createTransporter = () => {
       : port === 465;
 
   if (!user || !pass) {
-    console.warn('[emailService] Missing SMTP credentials. Check EMAIL_USER / EMAIL_PASSWORD envs.');
+    console.warn('[emailService] Missing SMTP credentials. Check EMAIL_USER / EMAIL_PASS envs.');
   }
 
   return nodemailer.createTransport({

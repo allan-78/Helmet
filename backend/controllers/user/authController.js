@@ -1,6 +1,9 @@
 const User = require('../../models/User');
 const { sendTokenResponse } = require('../../utils/generateToken');
-const { sendPasswordResetEmail } = require('../../utils/emailService');
+const {
+  sendPasswordResetEmail,
+  sendVerificationEmail,
+} = require('../../utils/emailService');
 const crypto = require('crypto');
 
 // @desc    Register user
@@ -22,7 +25,33 @@ exports.register = async (req, res) => {
     // Create user
     const user = await User.create({ name, email, password });
 
-    sendTokenResponse(user, 201, res);
+    // --- MODIFICATION START ---
+    const verificationToken = user.generateVerificationToken();
+    await user.save({ validateBeforeSave: false });
+
+    // Create verification URL - THIS IS THE FIX
+    // We point to the API route, not the frontend route
+    const verificationUrl = `http://localhost:${
+      process.env.PORT || 5000
+    }/api/auth/verify-email/${verificationToken}`;
+
+    // Send email
+    try {
+      await sendVerificationEmail(user, verificationUrl);
+
+      res.status(201).json({
+        success: true,
+        message: 'Registration successful. Please check your email to verify your account.',
+      });
+    } catch (emailError) {
+      console.error('Email sending error:', emailError);
+      // Even if email fails, don't block registration, but inform user
+      return res.status(500).json({
+        success: false,
+        message: 'Registration failed, could not send verification email.',
+      });
+    }
+    // --- MODIFICATION END ---
   } catch (error) {
     res.status(500).json({
       success: false,
@@ -46,6 +75,14 @@ exports.login = async (req, res) => {
       return res.status(401).json({
         success: false,
         message: 'Invalid credentials',
+      });
+    }
+
+    // Check if user is verified
+    if (!user.isVerified) {
+      return res.status(401).json({
+        success: false,
+        message: 'Please check your email to verify your account before logging in.',
       });
     }
 
@@ -77,6 +114,48 @@ exports.login = async (req, res) => {
   }
 };
 
+// @desc    Verify email
+// @route   GET /api/auth/verify-email/:token
+// @access  Public
+exports.verifyEmail = async (req, res) => {
+  try {
+    const { token } = req.params;
+
+    // Hash token
+    const verificationToken = crypto
+      .createHash('sha256')
+      .update(token)
+      .digest('hex');
+
+    // Find user with valid token
+    const user = await User.findOne({
+      verificationToken,
+      verificationTokenExpire: { $gt: Date.now() },
+    });
+
+    if (!user) {
+      return res.status(400).redirect(
+        `${process.env.FRONTEND_URL || 'http://localhost:5173'}/login?verified=false&message=Invalid or expired verification link.`
+      );
+    }
+
+    // Set user as verified
+    user.isVerified = true;
+    user.verificationToken = undefined;
+    user.verificationTokenExpire = undefined;
+    await user.save();
+
+    // Redirect to frontend login page with a success message
+    res.redirect(`${process.env.FRONTEND_URL || 'http://localhost:5173'}/login?verified=true`);
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      message: 'Email verification failed',
+      error: error.message,
+    });
+  }
+};
+
 // @desc    Firebase login
 // @route   POST /api/auth/firebase-login
 // @access  Public
@@ -94,6 +173,7 @@ exports.firebaseLogin = async (req, res) => {
         name,
         avatar: avatar ? { url: avatar } : undefined,
         password: crypto.randomBytes(16).toString('hex'), // Random password
+        isVerified: true, // --- Auto-verify social logins ---
       });
     }
 

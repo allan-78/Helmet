@@ -1,6 +1,7 @@
 const Review = require('../models/Review');
 const Product = require('../models/Product');
 const Order = require('../models/Order');
+const User = require('../models/User');
 
 // @desc    Create review
 // @route   POST /api/reviews
@@ -197,6 +198,53 @@ exports.getReviewEligibility = async (req, res) => {
     res.status(500).json({
       success: false,
       message: 'Failed to check review eligibility',
+      error: error.message,
+    });
+  }
+};
+
+// @desc    Get all reviews (admin)
+// @route   GET /api/admin/reviews
+// @access  Private/Admin
+exports.getAllReviews = async (req, res) => {
+  try {
+    const { search = '', page = 1, limit = 25 } = req.query;
+
+    const query = {};
+    if (search) {
+      const regex = new RegExp(search, 'i');
+      const productIds = await Product.find({ name: regex }).select('_id');
+      const userIds = await User.find({
+        $or: [{ name: regex }, { email: regex }],
+      }).select('_id');
+
+      query.$or = [
+        { comment: regex },
+        { product: { $in: productIds.map((p) => p._id) } },
+        { user: { $in: userIds.map((u) => u._id) } },
+      ];
+    }
+
+    const reviews = await Review.find(query)
+      .populate('user', 'name email')
+      .populate('product', 'name')
+      .sort('-createdAt')
+      .limit(Number(limit))
+      .skip((Number(page) - 1) * Number(limit));
+
+    const count = await Review.countDocuments(query);
+
+    res.status(200).json({
+      success: true,
+      reviews,
+      count,
+      totalPages: Math.ceil(count / limit),
+      currentPage: Number(page),
+    });
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      message: 'Failed to fetch reviews',
       error: error.message,
     });
   }

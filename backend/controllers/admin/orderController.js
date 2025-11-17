@@ -38,6 +38,35 @@ exports.getAllOrders = async (req, res) => {
   }
 };
 
+// @desc    Get single order
+// @route   GET /api/admin/orders/:id
+// @access  Private/Admin
+exports.getOrderById = async (req, res) => {
+  try {
+    const order = await Order.findById(req.params.id)
+      .populate('user', 'name email')
+      .populate('orderItems.product', 'name price images');
+
+    if (!order) {
+      return res.status(404).json({
+        success: false,
+        message: 'Order not found',
+      });
+    }
+
+    res.status(200).json({
+      success: true,
+      order,
+    });
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      message: 'Failed to fetch order',
+      error: error.message,
+    });
+  }
+};
+
 // @desc    Update order status
 // @route   PATCH /api/admin/orders/:id/status
 // @access  Private/Admin

@@ -18,12 +18,15 @@ import {
   Stack,
   Grid,
 } from '@mui/material';
-import { Block, CheckCircle, Search } from '@mui/icons-material';
+import { Block, CheckCircle, Search, PersonAddAlt, PersonRemoveAlt1, DeleteForever } from '@mui/icons-material';
 import api from '../../services/api';
 import { toast } from 'react-toastify';
 import Loading from '../../components/common/Loading';
+import { useAuth } from '../../context/AuthContext';
+import Tooltip from '@mui/material/Tooltip';
 
 const AdminUsers = () => {
+  const { user: currentUser } = useAuth();
   const [users, setUsers] = useState([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
@@ -54,6 +57,28 @@ const AdminUsers = () => {
       fetchUsers();
     } catch (error) {
       toast.error('Action failed');
+    }
+  };
+
+  const handleRoleUpdate = async (userId, currentRole) => {
+    try {
+      const nextRole = currentRole === 'admin' ? 'user' : 'admin';
+      await api.put(`/admin/users/${userId}/role`, { role: nextRole });
+      toast.success(`User promoted to ${nextRole}`);
+      fetchUsers();
+    } catch (error) {
+      toast.error('Role update failed');
+    }
+  };
+
+  const handleDeleteUser = async (userId) => {
+    if (!window.confirm('Delete this user? This action cannot be undone.')) return;
+    try {
+      await api.delete(`/admin/users/${userId}`);
+      toast.success('User deleted');
+      fetchUsers();
+    } catch (error) {
+      toast.error('Deletion failed');
     }
   };
 
@@ -171,16 +196,46 @@ const AdminUsers = () => {
                         color={user.isBlocked ? 'error' : 'success'}
                       />
                     </TableCell>
-                    <TableCell align="right">
-                      <IconButton
-                        size="small"
-                        onClick={() => handleBlockUser(user._id, user.isBlocked)}
-                        color={user.isBlocked ? 'success' : 'error'}
-                        disabled={user.role === 'admin'}
-                      >
-                        {user.isBlocked ? <CheckCircle /> : <Block />}
-                      </IconButton>
-                    </TableCell>
+                <TableCell align="right">
+                  <Stack direction="row" spacing={1} justifyContent="flex-end">
+                    <Tooltip title={user.role === 'admin' ? 'Demote to user' : 'Promote to admin'}>
+                      <span>
+                        <IconButton
+                          size="small"
+                          color="primary"
+                          onClick={() => handleRoleUpdate(user._id, user.role)}
+                          disabled={currentUser?._id === user._id}
+                        >
+                          {user.role === 'admin' ? <PersonRemoveAlt1 /> : <PersonAddAlt />}
+                        </IconButton>
+                      </span>
+                    </Tooltip>
+                    <Tooltip title={user.isBlocked ? 'Unblock user' : 'Block user'}>
+                      <span>
+                        <IconButton
+                          size="small"
+                          onClick={() => handleBlockUser(user._id, user.isBlocked)}
+                          color={user.isBlocked ? 'success' : 'warning'}
+                          disabled={currentUser?._id === user._id}
+                        >
+                          {user.isBlocked ? <CheckCircle /> : <Block />}
+                        </IconButton>
+                      </span>
+                    </Tooltip>
+                    <Tooltip title="Delete user">
+                      <span>
+                        <IconButton
+                          size="small"
+                          color="error"
+                          onClick={() => handleDeleteUser(user._id)}
+                          disabled={currentUser?._id === user._id}
+                        >
+                          <DeleteForever />
+                        </IconButton>
+                      </span>
+                    </Tooltip>
+                  </Stack>
+                </TableCell>
                   </TableRow>
                 ))}
               </TableBody>

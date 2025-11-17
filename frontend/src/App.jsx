@@ -26,16 +26,19 @@ import AdminDashboard from './pages/admin/AdminDashboard';
 import AdminProducts from './pages/admin/AdminProducts';
 import AdminOrders from './pages/admin/AdminOrders';
 import AdminUsers from './pages/admin/AdminUsers';
+import AdminCategories from './pages/admin/AdminCategories';
+import AdminBrands from './pages/admin/AdminBrands';
+import AdminReviews from './pages/admin/AdminReviews';
 
 const AppContent = () => {
   const location = useLocation();
   const isAdminRoute = location.pathname.startsWith('/admin');
 
   return (
-    <Box sx={{ display: 'flex', flexDirection: 'column', minHeight: '100vh' }}>
+      <Box sx={{ display: 'flex', flexDirection: 'column', minHeight: '100vh' }}>
       {!isAdminRoute && <Header />}
       <Box component="main" sx={{ flexGrow: 1, pt: isAdminRoute ? 0 : 8 }}>
-        <Routes>
+          <Routes>
             {/* Public Routes */}
             <Route path="/" element={<HomePage />} />
             <Route path="/products" element={<ProductsPage />} />
@@ -107,12 +110,15 @@ const AppContent = () => {
               <Route path="products" element={<AdminProducts />} />
               <Route path="orders" element={<AdminOrders />} />
               <Route path="users" element={<AdminUsers />} />
+              <Route path="categories" element={<AdminCategories />} />
+              <Route path="brands" element={<AdminBrands />} />
+              <Route path="reviews" element={<AdminReviews />} />
             </Route>
             <Route path="/about" element={<About />} />
           </Routes>
-      </Box>
+        </Box>
       {!isAdminRoute && <Footer />}
-    </Box>
+      </Box>
   );
 };
 
